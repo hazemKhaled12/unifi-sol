@@ -1,11 +1,18 @@
-import { CaseCard } from "./case-card";
+import { CaseCard } from './case-card'
+import styled from 'styled-components'
+
+const CardListContainer = styled.div`
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+`
 
 export const CaseList = ({ cases }: any) => {
-  return (
-    <div>
-      {cases.map((details: any) => (
-        <CaseCard details={details} />
-      ))}
-    </div>
-  );
-};
+	return (
+		<CardListContainer>
+			{cases.map((details: any) => (
+				<CaseCard details={details} />
+			))}
+		</CardListContainer>
+	)
+}

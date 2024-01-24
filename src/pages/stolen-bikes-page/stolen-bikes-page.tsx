@@ -3,93 +3,123 @@ import { CaseList } from './components/cases-list'
 import { ErrorView } from './components/error-view'
 import { HLoading } from '@/components/h-loading/h-loading'
 import { EmptyView } from './components/empty-view'
+import useGetBikes from './hooks/use-get-bikes'
+import { useDebounce } from '@/hooks/use-debounce/use-debounce'
+
+type Query = {
+	page: number
+	per_page: number
+	query: string
+	stolen_after: string | null
+	stolen_before: string | null
+	location: string
+	stolenness: string
+	distance: number
+}
 
 const StolenBikesPage: React.FC = () => {
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState(false)
-	const [cases, setCases] = useState([])
-	const [totalCases, setTotalCases] = useState(0)
-	const [currentPage, setCurrentPage] = useState(1)
-	const [pageSize, setPageSize] = useState(10)
-	const [filterTitle, setFilterTitle] = useState('')
-	const [filterStartDate, setFilterStartDate] = useState('')
-	const [filterEndDate, setFilterEndDate] = useState('')
+	const [data, setData] = useState<any>([])
+	const [query, setQuery] = useState<string>('')
+	const [filters, setFilters] = useState<Query>({
+		page: 0,
+		per_page: 10,
+		query: '',
+		stolen_after: null,
+		stolen_before: null,
+		location: 'Munich',
+		stolenness: 'proximity',
+		distance: 10
+	})
+	const debouncedQuery = useDebounce(query)
+	const { cases, error, loading, totalCases } = useGetBikes(filters, [
+		filters.page,
+		filters.query,
+		filters.stolen_after,
+		filters.stolen_before,
+		filters.location
+	])
 
 	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading(true)
-				setError(false)
-
-				// Fetch the total number of bike theft cases
-				const totalCasesResponse = await fetch(
-					`https://bikeindex.org/api/v3/search/count?query=stolen&location=Munich`
-				)
-				const totalCasesData = await totalCasesResponse.json()
-				setTotalCases(totalCasesData.count)
-
-				// Fetch the bike theft cases based on pagination and filters
-				const casesResponse = await fetch(
-					`https://bikeindex.org/api/v3/search?page=${currentPage}&per_page=${pageSize}&query=stolen&location=Munich&title=${filterTitle}&stolen_after=${filterStartDate}&stolen_before=${filterEndDate}`
-				)
-				const casesData = await casesResponse.json()
-				setCases(casesData.bikes)
-
-				setLoading(false)
-			} catch (error) {
-				setError(true)
-				setLoading(false)
-			}
-		}
-
-		fetchData()
-	}, [currentPage, pageSize, filterTitle, filterStartDate, filterEndDate])
+		setFilters((prevQuery) => ({
+			...prevQuery,
+			query: debouncedQuery
+		}))
+	}, [debouncedQuery])
 
 	const handlePageChange = (page: number) => {
-		setCurrentPage(page)
+		setFilters((prevQuery) => ({
+			...prevQuery,
+			page
+		}))
 	}
 
-	const handleFilterTitleChange = (title: string) => {
-		setFilterTitle(title)
+	const handleQuerychange = (query: string) => {
+		setQuery(query)
 	}
 
-	const handleFilterDateRangeChange = (startDate: string, endDate: string) => {
-		setFilterStartDate(startDate)
-		setFilterEndDate(endDate)
+	const handleFilterDateRangeChange = (startDate: string | null, endDate: string | null) => {
+		setFilters((prevQuery) => ({
+			...prevQuery,
+			stolen_after: startDate,
+			stolen_before: endDate
+		}))
 	}
 
 	return (
 		<div>
+			<div>
+				<input
+					type="text"
+					placeholder="Filter by title"
+					onChange={(e) => handleQuerychange(e.target.value)}
+				/>
+			</div>
+			<div>
+				<input
+					type="date"
+					placeholder="Start Date"
+					onChange={(e) =>
+						handleFilterDateRangeChange(
+							Date.parse(e.target.value).toString(),
+							filters.stolen_before
+						)
+					}
+				/>
+				<input
+					type="date"
+					placeholder="End Date"
+					onChange={(e) =>
+						handleFilterDateRangeChange(
+							filters.stolen_after,
+							Date.parse(e.target.value).toString()
+						)
+					}
+				/>
+			</div>
+
 			{loading && <HLoading />}
 			{error && <ErrorView error={'Error fetshing data, Feel free to try again'} />}
 			{!loading && !error && cases.length === 0 && <EmptyView />}
 			{!loading && !error && cases.length > 0 && (
-				<div>
-					<div>
-						<input
-							type="text"
-							placeholder="Filter by title"
-							onChange={(e) => handleFilterTitleChange(e.target.value)}
-						/>
-					</div>
-					<div>
-						<input
-							type="date"
-							placeholder="Start Date"
-							onChange={(e) => handleFilterDateRangeChange(e.target.value, filterEndDate)}
-						/>
-						<input
-							type="date"
-							placeholder="End Date"
-							onChange={(e) => handleFilterDateRangeChange(filterStartDate, e.target.value)}
-						/>
-					</div>
+				<div style={{ marginTop: '16px' }}>
 					<div>
 						<CaseList cases={cases} />
 					</div>
-					<div>
-						<button onClick={() => handlePageChange(currentPage - 1)}>Previous Page</button>
-						<button onClick={() => handlePageChange(currentPage + 1)}>Next Page</button>
+					<div
+						style={{ marginTop: '16px', display: 'flex', gap: '8px', justifyContent: 'end' }}
+					>
+						<button
+							disabled={filters.page === 0 ? true : false}
+							onClick={() => handlePageChange(filters.page - 1)}
+						>
+							Previous Page
+						</button>
+						<button
+							disabled={filters.page >= Math.ceil(totalCases / 10) ? true : false}
+							onClick={() => handlePageChange(filters.page + 1)}
+						>
+							Next Page
+						</button>
 					</div>
 				</div>
 			)}
