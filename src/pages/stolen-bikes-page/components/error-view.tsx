@@ -1,7 +1,7 @@
-export const ErrorView = ({ error }) => {
-    return (
-        <div>
-            <div>{error}</div>
-        </div>
-    );
+export const ErrorView = ({ error }: { error: string }) => {
+	return (
+		<div>
+			<div>{error}</div>
+		</div>
+	)
 }
