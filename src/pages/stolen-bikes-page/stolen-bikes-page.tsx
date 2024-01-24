@@ -91,11 +91,12 @@ const StolenBikesPage: React.FC = () => {
 					onChange={(e) =>
 						handleFilterDateRangeChange(
 							filters.stolen_after,
-							Date.parse(e.target.value).toString()
+							Date.parse(e.target.value)?.toString()
 						)
 					}
 				/>
 			</div>
+			<div>Number of all cases: {totalCases?.toLocaleString()} case</div>
 
 			{loading && <HLoading />}
 			{error && <ErrorView error={'Error fetshing data, Feel free to try again'} />}
@@ -105,24 +106,31 @@ const StolenBikesPage: React.FC = () => {
 					<div>
 						<CaseList cases={cases} />
 					</div>
-					<div
-						style={{ marginTop: '16px', display: 'flex', gap: '8px', justifyContent: 'end' }}
-					>
-						<button
-							disabled={filters.page === 0 ? true : false}
-							onClick={() => handlePageChange(filters.page - 1)}
-						>
-							Previous Page
-						</button>
-						<button
-							disabled={filters.page >= Math.ceil(totalCases / 10) ? true : false}
-							onClick={() => handlePageChange(filters.page + 1)}
-						>
-							Next Page
-						</button>
-					</div>
 				</div>
 			)}
+			<div
+				style={{
+					marginTop: '16px',
+					display: 'flex',
+					gap: '8px',
+					justifyContent: 'end',
+					alignItems: 'center'
+				}}
+			>
+				<button
+					disabled={filters.page === 0 ? true : false}
+					onClick={() => handlePageChange(filters.page - 1)}
+				>
+					Previous Page
+				</button>
+				<div>Page: {filters.page + 1}</div>
+				<button
+					disabled={filters.page >= Math.ceil(totalCases / 10) ? true : false}
+					onClick={() => handlePageChange(filters.page + 1)}
+				>
+					Next Page
+				</button>
+			</div>
 		</div>
 	)
 }

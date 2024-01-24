@@ -34,20 +34,19 @@ const useGetBikes = (
 				setLoading(true)
 				setError(false)
 				// Fetch the total number of bike theft cases
-				const totalCasesResponse = await BikesService.getBikesCasesCount(query)
-				const totalCasesData = await totalCasesResponse
-				console.log('totalCasesDatas', totalCasesResponse)
-				setTotalCases(totalCasesData.totalCasesData)
-				// console.log('totalCasesData', totalCasesData)
 
-				// Fetch the bike theft cases based on pagination and filters
-				// const casesResponse = await fetch(
-				// 	`https://bikeindex.org/api/v3/search?page=${query.page}&per_page=${query.per_page}&query=stolen&location=Munich&title=${query.title}&stolen_after=${query.stolen_after}&stolen_before=${query.stolen_before}`
-				// )
 				const casesResponse = await BikesService.getBikesCases(query)
 				const casesData = await casesResponse
-
 				setCases(casesData.bikes)
+
+				const totalCasesResponse = await BikesService.getBikesCasesCount({
+					location: query.location,
+					distance: query.distance,
+					stolenness: query.stolenness,
+					query: query.query
+				})
+				const totalCasesData = await totalCasesResponse
+				setTotalCases(totalCasesData.stolen)
 
 				setLoading(false)
 			} catch (error) {

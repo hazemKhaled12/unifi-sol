@@ -10,8 +10,8 @@ const CardListContainer = styled.div`
 export const CaseList = ({ cases }: any) => {
 	return (
 		<CardListContainer>
-			{cases.map((details: any) => (
-				<CaseCard details={details} />
+			{cases.map((details: any, index: number) => (
+				<CaseCard details={details} key={details?.id || index} />
 			))}
 		</CardListContainer>
 	)
